@@ -153,6 +153,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:#0b0912;color:#d8d4f0;
     <button class="btn" id="soundBtn">SUARA: ON</button>
     <button class="btn" id="musicBtn">MUSIK: ON</button>
     <div id="gfx"><span class="lb">GRAFIK</span><button class="btn" data-q="0">LOW</button><button class="btn" data-q="1">MID</button><button class="btn" data-q="2">HIGH</button><button class="btn" data-q="3">ULTRA</button></div>
+    <button class="btn" id="hsBtn">🏆 HIGHSCORE</button>
     <button class="btn" id="menuBtn">☰ PILIH DUNGEON</button>
     <button class="btn" id="fsBtn">⛶ LAYAR PENUH</button>
   </div>
@@ -3288,7 +3289,7 @@ function nickModal(cb,cur){
   const x=m.querySelector('#nickX');if(x)x.onclick=()=>{m.remove();cb(null);};
   setTimeout(()=>{try{inp.focus();}catch(e){}},50);
 }
-function showHS(f,mode){
+function showHS(f,mode,g){
   f=f===undefined?-1:f;mode=mode||'g';
   const o=$('overlay');o.style.display='flex';
   const me=getNick();
@@ -3299,10 +3300,10 @@ function showHS(f,mode){
   h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center"><button class="btn'+(f<0?' go':'')+'" data-f="-1">SEMUA</button>'+DUNGEONS.map((d,i)=>'<button class="btn'+(f===i?' go':'')+'" data-f="'+i+'">'+d.name+'</button>').join('')+'</div>';
   h+='<div id="hsList" style="width:min(92%,560px);display:flex;flex-direction:column;gap:3px;font-size:clamp(6px,1.3vw,10px)"><div style="color:#9a92c8;padding:14px">Memuat…</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn" id="hsNick">GANTI NICKNAME</button><button class="btn" id="hsBack">← KEMBALI</button></div>';
   o.innerHTML=h;
-  o.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>showHS(+b.dataset.f,mode));
-  o.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>showHS(f,b.dataset.m));
-  $('hsBack').onclick=showSelect;
-  $('hsNick').onclick=()=>nickModal(()=>showHS(f,mode),me);
+  o.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>showHS(+b.dataset.f,mode,g));
+  o.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>showHS(f,b.dataset.m,g));
+  $('hsBack').onclick=g?()=>{o.style.display='none';}:showSelect;
+  $('hsNick').onclick=()=>nickModal(()=>showHS(f,mode,g),me);
   const fill=html=>{const el=document.getElementById('hsList');if(el)el.innerHTML=html;};
   const loc=()=>loadHS().filter(x=>f<0||x.d===f).slice(0,10);
   if(mode==='l'){fill(rows(loc()));return;}
@@ -3766,7 +3767,7 @@ function showSelect(){
     h+='<button class="card" data-i="'+i+'" style="--c:'+d.accent+'"><b>'+d.name+'</b><span class="pips">'+pips+'</span><small>'+d.sub+'</small><small class="bl">BOS: '+d.bosses.map(x=>x.name).join(' · ')+'</small><em>'+(b>=25?'✔ TAMAT':b?'Terbaik: gel '+b+'/25':'Belum dicoba')+'</em>'+(best[d.id+'_e']?'<em style="color:#ff9a3a">∞ Endless: gel '+best[d.id+'_e']+'</em>':'')+(runs[i]||runs['e'+i]?'<u class="sv">▶ ADA PROGRES TERSIMPAN</u>':'')+'</button>';});
   o.innerHTML=h+'</div><div class="gembar" style="gap:6px"><button class="btn" id="expB">SALIN KODE SIMPAN</button><button class="btn" id="impB">MUAT KODE</button></div>';
   o.querySelectorAll('.card').forEach(el=>el.onclick=()=>askMode(+el.dataset.i));
-  $('shopB').onclick=showShop;$('colB').onclick=()=>window.openGallery();$('hsB').onclick=()=>showHS();
+  $('shopB').onclick=showShop;$('colB').onclick=()=>window.openGallery();$('hsB').onclick=()=>showHS();$('hsBtn').onclick=()=>showHS(-1,'g',true);
   $('expB').onclick=()=>{const c=exportCode();(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(c):Promise.reject()).then(()=>toast('KODE SIMPAN TERSALIN',2000),()=>{prompt('Salin kode simpan ini:',c);});};
   $('impB').onclick=()=>{const c=prompt('Tempel kode simpan:');if(!c)return;try{importCode(c);toast('PROGRES DIMUAT',2000);showSelect();}catch(e){toast('KODE TIDAK VALID',2000);}};
 }
