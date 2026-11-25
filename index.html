@@ -2625,7 +2625,7 @@ function loadDungeon(di){
   const as=bossAssets(di);BOSS_PORT={};BOSS_DIALOG=[];
   for(let t=0;t<5;t++){const b=DG.bosses[t],B=BOSS_BASE[t],key='boss'+(t+1);
     const def={boss:true,tier:t+1,name:b.name,hp:B.hp,spd:B.spd,reward:B.reward,leak:B.leak,scale:2,col:b.col,afps:B.afps,aura:b.aura};
-    Object.defineProperty(def,'frames',{get:()=>as[t].frames,enumerable:true});Object.defineProperty(def,'scale',{get:()=>as[t].custom?1/.91:2,enumerable:true});Object.defineProperty(def,'native',{get:()=>(as[t].custom&&di===0&&t===1)?-1:1,enumerable:true});Object.defineProperty(def,'pad',{get:()=>as[t].pad,enumerable:true});ENEMY_DEF[key]=def;
+    Object.defineProperty(def,'frames',{get:()=>as[t].frames,enumerable:true});Object.defineProperty(def,'scale',{get:()=>as[t].custom?1/.91:2,enumerable:true});Object.defineProperty(def,'native',{get:()=>1,enumerable:true});Object.defineProperty(def,'pad',{get:()=>as[t].pad,enumerable:true});ENEMY_DEF[key]=def;
     Object.defineProperty(BOSS_PORT,key,{get:()=>as[t].port,enumerable:true,configurable:true});BOSS_DIALOG.push({name:b.name,color:b.aura,pitch:b.pitch,lines:b.lines});}
   for(let t=1;t<=5;t++){const cn=artNo(di,t);if(cn){const pi=new Image();pi.src=artUrl(cn);}}
   buildPath(DG.wp);
