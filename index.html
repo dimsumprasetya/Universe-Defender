@@ -2610,6 +2610,7 @@ function regFrames(di,k){
   try{const r=HD.creepFrames(di,k);r.frames.pad=r.pad;return HUE_FR[key]=r.frames;}catch(err){console.error(err);return HUE_FR[key]=BASE_FR[k].map(c=>hueShift(c,DUNGEONS[di].hue));}
 }
 function autoPort(fr,sz){const c=newCanvas(32,32),g=c.getContext('2d');g.imageSmoothingEnabled=false;const q=Math.round(sz*.62);g.drawImage(fr,Math.round((sz-q)/2),0,q,q,0,0,32,32);return c;}
+const CBP=[[7,.05,.9,1,0],[9,.065,1.1,1,.9],[7,.05,1,1,.7],[6,.045,.7,0,0],[11,.075,1.3,1,1.6]];
 function loadCustomBoss(out){for(let t=0;t<5;t++){const fr=[];let n=0;for(let f=0;f<4;f++){const im=new Image();im.onload=()=>{const c=newCanvas(im.width,im.height);c.getContext('2d').drawImage(im,0,0);fr[f]=c;if(++n===4){const c0=fr[0],q=Math.min(c0.width,Math.round(c0.height*.42)),p=newCanvas(32,32),g=p.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(c0,Math.round((c0.width-q)/2),Math.round(c0.height*.02),q,q,0,0,32,32);out[t].custom={frames:fr,port:[p,p]};}};im.src='bs/d0_b'+(t+1)+'_'+f+'.png';}}}
 function bossAssets(di){
   if(BOSS_CACHE[di])return BOSS_CACHE[di];const out=[];
@@ -2625,7 +2626,7 @@ function loadDungeon(di){
   const as=bossAssets(di);BOSS_PORT={};BOSS_DIALOG=[];
   for(let t=0;t<5;t++){const b=DG.bosses[t],B=BOSS_BASE[t],key='boss'+(t+1);
     const def={boss:true,tier:t+1,name:b.name,hp:B.hp,spd:B.spd,reward:B.reward,leak:B.leak,scale:2,col:b.col,afps:B.afps,aura:b.aura};
-    Object.defineProperty(def,'frames',{get:()=>as[t].frames,enumerable:true});Object.defineProperty(def,'scale',{get:()=>as[t].custom?1/.91:2,enumerable:true});Object.defineProperty(def,'native',{get:()=>1,enumerable:true});Object.defineProperty(def,'pad',{get:()=>as[t].pad,enumerable:true});ENEMY_DEF[key]=def;
+    Object.defineProperty(def,'frames',{get:()=>as[t].frames,enumerable:true});Object.defineProperty(def,'scale',{get:()=>as[t].custom?1/.91:2,enumerable:true});Object.defineProperty(def,'cb',{get:()=>as[t].custom&&di===0?CBP[t]:null,enumerable:true});Object.defineProperty(def,'native',{get:()=>1,enumerable:true});Object.defineProperty(def,'pad',{get:()=>as[t].pad,enumerable:true});ENEMY_DEF[key]=def;
     Object.defineProperty(BOSS_PORT,key,{get:()=>as[t].port,enumerable:true,configurable:true});BOSS_DIALOG.push({name:b.name,color:b.aura,pitch:b.pitch,lines:b.lines});}
   for(let t=1;t<=5;t++){const cn=artNo(di,t);if(cn){const pi=new Image();pi.src=artUrl(cn);}}
   buildPath(DG.wp);
@@ -3127,6 +3128,7 @@ function update(dt){
     let sp=e.spd;if(e.slowT>0){e.slowT-=dt;sp*=(e.charge>0?Math.min(1,e.slowF+.3):e.slowF);}
     {let mu=(e.frenzy>0?1.3:1)*(e.haste>0?1.25:1)*(e.charge>0?1.8:1);if(d.boss){mu=Math.min(mu,1.8);if(WP&&e.seg>=WP.length-3)mu=1;}sp*=mu;}
     e.anim+=dt*d.afps*(e.slowT>0?e.slowF:1);
+    if(d.cb){const k=Math.floor(e.anim/2);if(k!==e._fk){e._fk=k;if(!S.dialog){if(d.cb[3])part(e.x,e.y,'#a89878',4,{spd:14,spdR:26,life:.35,sz:3,vz:26,z:2});if(d.cb[4])S.shake=Math.max(S.shake,d.cb[4]);}}}
     if(e.hit>0)e.hit-=dt;
     let mv=sp*dt,stopE=false;
     const A=d.atk;
@@ -3638,6 +3640,7 @@ function draw(){
     ctx.save();
     if(e.face*(d.native||1)<0){ctx.translate(Math.round(e.x)*2,0);ctx.scale(-1,1);}
     if(e.slowT>0&&GQP[GQ].fl)ctx.filter='hue-rotate(150deg) brightness(1.2)';
+    if(d.cb){const ph=e.anim/4*6.2832,sn=Math.sin(ph),ab=Math.abs(sn),sq=1-ab;ctx.translate(e.x,gy);ctx.translate(0,-ab*d.cb[0]);ctx.rotate(sn*d.cb[1]);ctx.scale(1+(.04*sq-.02*ab)*d.cb[2],1-(.05*sq-.03*ab)*d.cb[2]);ctx.translate(-e.x,-gy);}
     ctx.imageSmoothingEnabled=true;ctx.drawImage(fr,Math.round(e.x-w/2),Math.round(dy),w,h);
     if(e.hit>0&&GQP[GQ].fl){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.55;ctx.drawImage(fr,Math.round(e.x-w/2),Math.round(dy),w,h);}
     ctx.restore();
