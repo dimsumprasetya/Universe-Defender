@@ -3256,14 +3256,15 @@ const SB_URL='https://mdpykmgduohpxdrpheql.supabase.co',SB_KEY='sb_publishable_I
 const SBH={apikey:SB_KEY,Authorization:'Bearer '+SB_KEY};
 const BAD_LONG=['ANJING','BANGSAT','KONTOL','MEMEK','NGENTOT','JANCOK','GOBLOK','FUCK','SHIT','BITCH','PUSSY','BOKEP','NIGGA','NIGGER','PEPEK','PERKOSA'],BAD_SHORT=['BABI','ASU','TAI','TOLOL','DICK','SEX','PORN','NAZI','ANJ','BGST'];
 function badNick(n){return BAD_SHORT.includes(n)||BAD_LONG.some(w=>n.indexOf(w)>=0);}
+function devId(){let d='';try{d=localStorage.getItem('ud_dev')||'';if(!/^[A-Za-z0-9-]{8,64}$/.test(d)){d=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2,12));localStorage.setItem('ud_dev',d);}}catch(e){d='x'+Math.random().toString(36).slice(2,12);}return d;}
 function sbPost(en){
-  try{return fetch(SB_URL+'/rest/v1/scores',{method:'POST',headers:Object.assign({'Content-Type':'application/json',Prefer:'return=minimal'},SBH),body:JSON.stringify({nick:en.n,score:en.s,dungeon:en.d,wave:en.w,endless:!!en.e,win:!!en.v}),keepalive:true});}catch(e){return Promise.reject(e);}
+  try{return fetch(SB_URL+'/rest/v1/scores',{method:'POST',headers:Object.assign({'Content-Type':'application/json',Prefer:'return=minimal'},SBH),body:JSON.stringify({nick:en.n,score:en.s,dungeon:en.d,wave:en.w,endless:!!en.e,win:!!en.v,device:devId()}),keepalive:true});}catch(e){return Promise.reject(e);}
 }
 function sbRank(s){
-  return fetch(SB_URL+'/rest/v1/scores?select=id&score=gt.'+s,{method:'HEAD',headers:Object.assign({Prefer:'count=exact'},SBH)}).then(r=>{const c=(r.headers.get('content-range')||'').split('/')[1];return c===undefined?0:(+c)+1;});
+  return fetch(SB_URL+'/rest/v1/rpc/rank_score',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},SBH),body:JSON.stringify({p_score:s,p_nick:getNick()||'PLAYER'})}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();}).then(n=>+n||0);
 }
 function sbTop(f){
-  return fetch(SB_URL+'/rest/v1/scores?select=nick,score,dungeon,wave,endless,win&order=score.desc,created_at.asc&limit=10'+(f>=0?'&dungeon=eq.'+f:''),{headers:SBH}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();}).then(a=>a.map(x=>({n:x.nick,s:x.score,d:x.dungeon,w:x.wave,e:x.endless?1:0,v:x.win?1:0})));
+  return fetch(SB_URL+'/rest/v1/rpc/top_scores',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},SBH),body:JSON.stringify({p_dungeon:f>=0?f:null,p_limit:10})}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();}).then(a=>a.map(x=>({n:x.nick,s:x.score,d:x.dungeon,w:x.wave,e:x.endless?1:0,v:x.win?1:0})));
 }
 function addHS(score,win){
   if(!(score>0))return 0;
@@ -3327,7 +3328,7 @@ function gameOver(win){
 /* ---------- draw ---------- */
 
 /* ---------- ISOMETRIC ---------- */
-const IHW=42,KK=1.4,TK=.8;let IOX=700,IOY=178;
+const IHW=42,KK=1.4,TK=.56;let IOX=700,IOY=178;
 const LAYS=[{"ox": 700, "oy": 238, "bx": 0, "by": 0, "bz": 1.43}, {"ox": 700, "oy": 238, "bx": 0, "by": 0, "bz": 1.43}, {"ox": 700, "oy": 238, "bx": 0, "by": 0, "bz": 1.43}, {"ox": 700, "oy": 238, "bx": 0, "by": 0, "bz": 1.43}, {"ox": 700, "oy": 238, "bx": 0, "by": 0, "bz": 1.43}, {"ox": 700, "oy": 238, "bx": 0, "by": 0, "bz": 1.43}];
 let BLOCKED=new Set();const BGI={};
 function ISO(x,y){const gx=x/T+1,gy=y/T+1;return[IOX+(gx-gy)*IHW,IOY+(gx+gy)*IHW/2];}
@@ -3622,7 +3623,7 @@ function draw(){
   for(const en of ents){
     if(en.t){drawTowerIso(en.t);continue;}
     const e=en.e;{const q0=ISO(e.x,e.y);ctx.save();ctx.translate(q0[0]-e.x,q0[1]-e.y);}
-    const d=ENEMY_DEF[e.type],fr=d.frames[Math.floor(e.anim)%4],sc=d.scale,w=fr.width*sc,h=fr.height*sc,pd=(d.pad||0)*sc,hh=h-2*pd,ww=w-2*pd;
+    const d=ENEMY_DEF[e.type],fr=d.frames[Math.floor(e.anim)%4],sc=d.scale*.7,w=fr.width*sc,h=fr.height*sc,pd=(d.pad||0)*sc,hh=h-2*pd,ww=w-2*pd;
     const fly=d.fly?-10+Math.sin(S.time*5+e.ph)*3:0;
     let dy,gy;
     const floatB=e.type==='boss5'&&DGI===5;
@@ -3635,7 +3636,7 @@ function draw(){
     ctx.save();
     if(e.face<0){ctx.translate(Math.round(e.x)*2,0);ctx.scale(-1,1);}
     if(e.slowT>0&&GQP[GQ].fl)ctx.filter='hue-rotate(150deg) brightness(1.2)';
-    ctx.drawImage(fr,Math.round(e.x-w/2),Math.round(dy),w,h);
+    ctx.imageSmoothingEnabled=true;ctx.drawImage(fr,Math.round(e.x-w/2),Math.round(dy),w,h);
     if(e.hit>0&&GQP[GQ].fl){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.55;ctx.drawImage(fr,Math.round(e.x-w/2),Math.round(dy),w,h);}
     ctx.restore();
     const bw=Math.max(24,ww*.8),bx=e.x-bw/2,by=d.boss?Math.max(3,dy+feetOf(d).top*sc-9):Math.max(16,(d.fly||floatB?e.y-hh/2-7+fly:dy+feetOf(d).top*sc-7));
