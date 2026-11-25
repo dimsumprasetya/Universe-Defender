@@ -2610,11 +2610,13 @@ function regFrames(di,k){
   try{const r=HD.creepFrames(di,k);r.frames.pad=r.pad;return HUE_FR[key]=r.frames;}catch(err){console.error(err);return HUE_FR[key]=BASE_FR[k].map(c=>hueShift(c,DUNGEONS[di].hue));}
 }
 function autoPort(fr,sz){const c=newCanvas(32,32),g=c.getContext('2d');g.imageSmoothingEnabled=false;const q=Math.round(sz*.62);g.drawImage(fr,Math.round((sz-q)/2),0,q,q,0,0,32,32);return c;}
+function loadCustomBoss(out){for(let t=0;t<5;t++){const fr=[];let n=0;for(let f=0;f<4;f++){const im=new Image();im.onload=()=>{const c=newCanvas(im.width,im.height);c.getContext('2d').drawImage(im,0,0);fr[f]=c;if(++n===4){const c0=fr[0],q=Math.min(c0.width,Math.round(c0.height*.55)),p=newCanvas(32,32),g=p.getContext('2d');g.imageSmoothingEnabled=true;g.drawImage(c0,Math.round((c0.width-q)/2),0,q,q,0,0,32,32);out[t].custom={frames:fr,port:p};}};im.src='bs/d0_b'+(t+1)+'_'+f+'.png';}}}
 function bossAssets(di){
   if(BOSS_CACHE[di])return BOSS_CACHE[di];const out=[];
   for(let t=0;t<5;t++){let built=null;const sz=HD.SZ[t],fn=HD.BOSS[di][t];
     const build=()=>{if(!built){const r=HD.mkSet(sz,fn,34);built={frames:r.frames,pad:r.pad,port:HD.port(di,t,r.frames,r.pad)};}return built;};
-    out.push({get frames(){return build().frames;},get pad(){return build().pad;},get port(){return build().port;},warm:build});}
+    out.push({custom:null,get frames(){return this.custom?this.custom.frames:build().frames;},get pad(){return this.custom?0:build().pad;},get port(){return this.custom?this.custom.port:build().port;},warm:build});}
+  if(di===0)loadCustomBoss(out);
   return BOSS_CACHE[di]=out;
 }
 function loadDungeon(di){
@@ -2623,7 +2625,7 @@ function loadDungeon(di){
   const as=bossAssets(di);BOSS_PORT={};BOSS_DIALOG=[];
   for(let t=0;t<5;t++){const b=DG.bosses[t],B=BOSS_BASE[t],key='boss'+(t+1);
     const def={boss:true,tier:t+1,name:b.name,hp:B.hp,spd:B.spd,reward:B.reward,leak:B.leak,scale:2,col:b.col,afps:B.afps,aura:b.aura};
-    Object.defineProperty(def,'frames',{get:()=>as[t].frames,enumerable:true});Object.defineProperty(def,'pad',{get:()=>as[t].pad,enumerable:true});ENEMY_DEF[key]=def;
+    Object.defineProperty(def,'frames',{get:()=>as[t].frames,enumerable:true});Object.defineProperty(def,'scale',{get:()=>as[t].custom?1/.91:2,enumerable:true});Object.defineProperty(def,'native',{get:()=>(as[t].custom&&di===0&&t===1)?-1:1,enumerable:true});Object.defineProperty(def,'pad',{get:()=>as[t].pad,enumerable:true});ENEMY_DEF[key]=def;
     Object.defineProperty(BOSS_PORT,key,{get:()=>as[t].port,enumerable:true,configurable:true});BOSS_DIALOG.push({name:b.name,color:b.aura,pitch:b.pitch,lines:b.lines});}
   for(let t=1;t<=5;t++){const cn=artNo(di,t);if(cn){const pi=new Image();pi.src=artUrl(cn);}}
   buildPath(DG.wp);
@@ -3634,7 +3636,7 @@ function draw(){
     if(e.lx===undefined){e.lx=e.x;e.ly=e.y;e.face=1;e.back=0;}
     {const ddx=e.x-e.lx,ddy=e.y-e.ly;if(Math.abs(ddx)+Math.abs(ddy)>.4){const sdx=ddx-ddy,sdy=ddx+ddy;e.face=sdx>0?1:-1;e.back=sdy<0?1:0;e.lx=e.x;e.ly=e.y;}}
     ctx.save();
-    if(e.face<0){ctx.translate(Math.round(e.x)*2,0);ctx.scale(-1,1);}
+    if(e.face*(d.native||1)<0){ctx.translate(Math.round(e.x)*2,0);ctx.scale(-1,1);}
     if(e.slowT>0&&GQP[GQ].fl)ctx.filter='hue-rotate(150deg) brightness(1.2)';
     ctx.imageSmoothingEnabled=true;ctx.drawImage(fr,Math.round(e.x-w/2),Math.round(dy),w,h);
     if(e.hit>0&&GQP[GQ].fl){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.55;ctx.drawImage(fr,Math.round(e.x-w/2),Math.round(dy),w,h);}
