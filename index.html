@@ -3660,8 +3660,9 @@ function draw(){
   if(S.banner){const b=S.banner,a=Math.min(1,b.t*2,(b.max-b.t)*5+.2);ctx.save();ctx.globalAlpha=a;ctx.textAlign='center';ctx.font='bold 16px "Press Start 2P",monospace';ctx.fillStyle='#000';ctx.fillText('ULTI: '+b.txt,W/2+2,62);ctx.fillStyle=b.col;ctx.fillText('ULTI: '+b.txt,W/2,60);
     ctx.font='8px "Press Start 2P",monospace';ctx.fillStyle='#fff';ctx.fillText(b.boss,W/2,76);ctx.restore();}
   {const sc=String(S.score|0).replace(/\B(?=(\d{3})+(?!\d))/g,'.');ctx.save();ctx.textAlign='right';ctx.textBaseline='alphabetic';
-   ctx.font='9px "Press Start 2P",monospace';ctx.fillStyle='#000';ctx.fillText('SKOR',W-15,H-39);ctx.fillStyle='#9fb4ff';ctx.fillText('SKOR',W-16,H-40);
-   ctx.font='bold 20px "Press Start 2P",monospace';ctx.fillStyle='#000';ctx.fillText(sc,W-15,H-13);ctx.fillStyle='#ffd34a';ctx.fillText(sc,W-16,H-14);ctx.restore();}
+   let nk='';try{nk=localStorage.getItem(NICK_KEY)||''}catch(e){}nk=nk||'TAMU';
+   ctx.font='bold 26px "Press Start 2P",monospace';ctx.fillStyle='#000';ctx.fillText(nk,W-14,H-74);ctx.fillStyle='#9fb4ff';ctx.fillText(nk,W-16,H-76);
+   ctx.font='bold 45px "Press Start 2P",monospace';ctx.fillStyle='#000';ctx.fillText(sc,W-14,H-12);ctx.fillStyle='#ffd34a';ctx.fillText(sc,W-16,H-14);ctx.restore();}
   ctx.restore();
   if(S.paused){ctx.fillStyle='#000a';ctx.fillRect(0,0,W,H);ctx.fillStyle='#fff';ctx.font='24px "Press Start 2P",monospace';ctx.textAlign='center';ctx.fillText('JEDA',W/2,H/2);ctx.textAlign='left';}
 }
