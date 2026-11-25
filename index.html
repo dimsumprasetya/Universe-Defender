@@ -2639,7 +2639,7 @@ function saveRun(){
   if(!S||S.over||S.active||S.dialog)return;
   if(S.wave===0&&!S.towers.length)return;
   const r=loadRuns();
-  r[rk(DGI,ENDLESS)]={wave:S.wave,gold:Math.round(S.gold),lives:S.lives,speed:S.speed,ts:Date.now(),
+  r[rk(DGI,ENDLESS)]={wave:S.wave,gold:Math.round(S.gold),lives:S.lives,speed:S.speed,score:S.score|0,ts:Date.now(),
     towers:S.towers.map(t=>({type:t.type,c:t.c,r:t.r,level:t.level,hp:Math.round(t.hp),max:t.max,spent:t.spent}))};
   putRuns(r);
 }
@@ -2648,7 +2648,7 @@ function resumeDungeon(i,e){
   const sv=loadRuns()[rk(i,e)];if(!sv){startDungeon(i,e);return;}
   if(!sound.ac){try{sound.ac=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
   ENDLESS=!!e;loadDungeon(i);reset();$('overlay').style.display='none';
-  S.wave=sv.wave;S.gold=sv.gold;S.lives=sv.lives;S.speed=sv.speed||1;
+  S.wave=sv.wave;S.gold=sv.gold;S.lives=sv.lives;S.speed=sv.speed||1;S.score=sv.score||0;
   (sv.towers||[]).forEach(o=>{if(!TOWER_DEF[o.type])return;
     const t={hp:o.hp,max:o.max,idle:0,hurt:0,type:o.type,c:o.c,r:o.r,x:o.c*T+T/2,y:o.r*T+T/2,level:o.level,cd:0,ang:0,spent:o.spent,flash:0,recoil:0,spin:0,hasT:false};
     S.towers.push(t);S.grid[o.c+','+o.r]=t;});
@@ -2809,7 +2809,7 @@ function reset(){
   D=null;{const dl=document.getElementById('dialog');if(dl)dl.style.display='none';}
   refreshUp();
   buildBar();
-  S={zones:[],later:[],banner:null,eshots:[],gold:DG.gold+UPLV.gold*20,lives:DG.lives+UPLV.lives*2,wave:0,active:false,queue:[],spawnT:0,enemies:[],towers:[],bullets:[],parts:[],beams:[],fx:[],
+  S={zones:[],later:[],banner:null,eshots:[],gold:DG.gold+UPLV.gold*20,lives:DG.lives+UPLV.lives*2,wave:0,score:0,active:false,queue:[],spawnT:0,enemies:[],towers:[],bullets:[],parts:[],beams:[],fx:[],
      grid:{},sel:null,build:null,speed:1,paused:false,over:false,time:0,mx:-1,my:-1,shake:0,dialog:false};
   updateHud();renderInfo();updateButtons();
 }
@@ -3031,7 +3031,7 @@ function hurt(e,dmg){
   e.hp-=dmg;e.hit=.08;
   if(e.hp>0&&ENEMY_DEF[e.type].boss&&(e.ultN||0)<2&&e.hp<=e.max*((e.ultN||0)?.2:.55)){const nn=e.ultN||0;e.ultN=nn+1;castUlt(e,nn);}
   if(e.hp<=0){
-    e.dead=true;S.gold+=Math.round(ENEMY_DEF[e.type].reward*DG.rew*(1+.05*UPLV.rew));
+    e.dead=true;S.gold+=Math.round(ENEMY_DEF[e.type].reward*DG.rew*(1+.05*UPLV.rew));S.score=(S.score||0)+Math.round(ENEMY_DEF[e.type].reward*5*(1+.25*DGI));
     const dd=ENEMY_DEF[e.type],big=dd.boss;
     for(let i=0;i<(big?30+dd.tier*20:10);i++)part(e.x,e.y,dd.col,1,{spd:40,spdR:140,life:.5,lifeR:.5});
     if(big){
@@ -3240,14 +3240,58 @@ function update(dt){
   S.fx=S.fx.filter(f=>f.t>0);
   if(S.parts.length>700)S.parts.splice(0,S.parts.length-700);
   if(S.active&&!S.queue.length&&!S.enemies.length){
-    S.active=false;const bonus=20+S.wave*4;S.gold+=bonus;for(const t of S.towers)t.hp=Math.min(t.max,t.hp+t.max*.6);saveBest(DG.id+(ENDLESS?'_e':''),S.wave);if(ENDLESS&&S.wave%10===0){const g=loadGem(),gg=Math.max(2,Math.round(GEM_BASE[DGI]*.25));g.gems+=gg;saveGem(g);setTimeout(()=>toast('◆ +'+gg+' PERMATA (gelombang '+S.wave+')',2200),2100);}if(S.sel)renderInfo();
+    S.active=false;const bonus=20+S.wave*4;S.gold+=bonus;S.score=(S.score||0)+Math.round(100*S.wave*(1+.25*DGI));for(const t of S.towers)t.hp=Math.min(t.max,t.hp+t.max*.6);saveBest(DG.id+(ENDLESS?'_e':''),S.wave);if(ENDLESS&&S.wave%10===0){const g=loadGem(),gg=Math.max(2,Math.round(GEM_BASE[DGI]*.25));g.gems+=gg;saveGem(g);setTimeout(()=>toast('◆ +'+gg+' PERMATA (gelombang '+S.wave+')',2200),2100);}if(S.sel)renderInfo();
     if(S.wave>=maxW()){gameOver(true);}
     else{saveRun();toast('GELOMBANG SELESAI! +'+bonus+'  ✔ tersimpan',2000);beep(520,.1,'triangle',.06);beep(780,.1,'triangle',.06);beep(1040,.2,'triangle',.06);}
     updateHud();updateButtons();
   }
 }
+/* ---------- HIGHSCORE + NICKNAME ---------- */
+const HS_KEY='ud_hs_v1',NICK_KEY='ud_nick';
+function getNick(){try{return (localStorage.getItem(NICK_KEY)||'').replace(/[^A-Z]/g,'').slice(0,6);}catch(e){return '';}}
+function setNick(n){try{localStorage.setItem(NICK_KEY,n);}catch(e){}}
+function loadHS(){try{const a=JSON.parse(localStorage.getItem(HS_KEY)||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}}
+function addHS(score,win){
+  if(!(score>0))return 0;
+  const a=loadHS(),en={n:getNick()||'PLAYER',s:score,d:DGI,w:S.wave,e:ENDLESS?1:0,v:win?1:0,t:Date.now()};
+  a.push(en);a.sort((x,y)=>y.s-x.s||x.t-y.t);
+  const rank=a.indexOf(en)+1;
+  try{localStorage.setItem(HS_KEY,JSON.stringify(a.slice(0,100)));}catch(e){}
+  return rank;
+}
+function nickModal(cb,cur){
+  if(document.getElementById('nickM'))return;
+  const m=document.createElement('div');m.id='nickM';
+  m.style.cssText='position:fixed;inset:0;z-index:300;background:#05030ce8;display:flex;align-items:center;justify-content:center;font-family:inherit';
+  m.innerHTML='<div style="background:#1a1530;border:4px solid #ffd23b;padding:clamp(10px,3vw,22px);text-align:center;display:flex;flex-direction:column;gap:10px;max-width:90vw"><div style="color:#ffd23b;font-size:clamp(9px,2vw,15px)">MASUKKAN NICKNAME</div><div style="color:#9a92c8;font-size:clamp(6px,1.2vw,9px);line-height:1.6">3–6 huruf (A–Z) untuk papan highscore</div><input id="nickI" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" style="font-family:inherit;font-size:clamp(14px,3.4vw,26px);letter-spacing:6px;text-align:center;text-transform:uppercase;width:9ch;margin:0 auto;padding:8px;background:#0a0814;color:#6ae8ff;border:3px solid #6a5cc8;outline:none"><div id="nickE" style="color:#ff6a6a;font-size:clamp(6px,1.2vw,9px);min-height:1.4em"></div><div style="display:flex;gap:8px;justify-content:center"><button class="btn go" id="nickOK">MASUK ▶</button>'+(cur?'<button class="btn" id="nickX">BATAL</button>':'')+'</div></div>';
+  document.body.appendChild(m);
+  const inp=m.querySelector('#nickI'),err=m.querySelector('#nickE');inp.value=cur||'';
+  const clean=()=>{inp.value=inp.value.replace(/[^a-zA-Z]/g,'').toUpperCase().slice(0,6);};
+  const ok=()=>{clean();if(inp.value.length<3){err.textContent='MINIMAL 3 HURUF (A–Z)';return;}setNick(inp.value);m.remove();cb(inp.value);};
+  inp.addEventListener('input',()=>{clean();err.textContent='';});
+  inp.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();ok();}});
+  m.querySelector('#nickOK').onclick=ok;
+  const x=m.querySelector('#nickX');if(x)x.onclick=()=>{m.remove();cb(null);};
+  setTimeout(()=>{try{inp.focus();}catch(e){}},50);
+}
+function showHS(f){
+  f=f===undefined?-1:f;
+  const o=$('overlay');o.style.display='flex';
+  const all=loadHS(),me=getNick(),list=all.filter(x=>f<0||x.d===f).slice(0,10);
+  let h='<h1>🏆 HIGHSCORE</h1><div style="color:#9a92c8;font-size:clamp(6px,1.2vw,9px)">Nickname kamu: <b style="color:#6ae8ff">'+(me||'-')+'</b></div>';
+  h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center"><button class="btn'+(f<0?' go':'')+'" data-f="-1">SEMUA</button>'+DUNGEONS.map((d,i)=>'<button class="btn'+(f===i?' go':'')+'" data-f="'+i+'">'+d.name+'</button>').join('')+'</div>';
+  h+='<div style="width:min(92%,560px);display:flex;flex-direction:column;gap:3px;font-size:clamp(6px,1.3vw,10px)">';
+  if(!list.length)h+='<div style="color:#9a92c8;padding:14px">Belum ada skor. Main dulu!</div>';
+  list.forEach((x,i)=>{const mine=x.n===me;h+='<div style="display:grid;grid-template-columns:2.2em 7ch 1fr auto;gap:8px;align-items:center;padding:5px 8px;background:'+(mine?'#2a3a66':'#1a1530')+';border:2px solid '+(i<3?['#ffd23b','#cfd6e8','#d9a066'][i]:'#3d3470')+';text-align:left"><b style="color:'+(i<3?['#ffd23b','#cfd6e8','#d9a066'][i]:'#9a92c8')+'">#'+(i+1)+'</b><b style="color:'+(mine?'#6ae8ff':'#fff')+'">'+x.n+'</b><span style="color:#9a92c8">'+(DUNGEONS[x.d]?DUNGEONS[x.d].name:'')+' · gel '+x.w+(x.e?' ∞':'')+(x.v?' ✔':'')+'</span><b style="color:#ffd23b">'+x.s.toLocaleString('id-ID')+'</b></div>';});
+  h+='</div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn" id="hsNick">GANTI NICKNAME</button><button class="btn" id="hsBack">← KEMBALI</button></div>';
+  o.innerHTML=h;
+  o.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>showHS(+b.dataset.f));
+  $('hsBack').onclick=showSelect;
+  $('hsNick').onclick=()=>nickModal(()=>showHS(f),me);
+}
+
 function gameOver(win){
-  MUS.end(win);S.over=true;S.active=false;clearRun(DGI);if(!ENDLESS)saveBest(DG.id,win?25:Math.max(0,S.wave-1));else saveBest(DG.id+'_e',Math.max(0,S.wave-1));
+  MUS.end(win);S.over=true;S.active=false;clearRun(DGI);let fin=S.score|0;if(win)fin+=Math.round((2000+Math.max(0,S.lives)*50)*(1+.25*DGI));const hsr=addHS(fin,win);if(!ENDLESS)saveBest(DG.id,win?25:Math.max(0,S.wave-1));else saveBest(DG.id+'_e',Math.max(0,S.wave-1));
   let gemGot=0,first=false;
   if(win){const g=loadGem();first=!g.cleared[DG.id];
     gemGot=Math.max(3,Math.round(GEM_BASE[DGI]*(first?1:.4)*(.7+.3*Math.max(0,S.lives)/(DG.lives+UPLV.lives*2))));
@@ -3255,7 +3299,7 @@ function gameOver(win){
   const o=$('overlay');o.style.display='flex';
   o.innerHTML='<h1 style="color:'+(win?'#7aff7a':'#ff5a5a')+'">'+(win?'DUNGEON '+DG.name+' TAMAT!':'BASE HANCUR')+'</h1><p>'+
     (win?'Kamu bertahan dari semua 25 gelombang di dungeon '+DG.name+'. Coba dungeon yang lebih sulit!':ENDLESS?'MODE ENDLESS: kamu bertahan sampai gelombang '+S.wave+' di '+DG.name+'. Rekormu: gelombang '+(loadBest()[DG.id+'_e']||0)+'. Permata didapat tiap 10 gelombang.':'Kamu bertahan sampai gelombang '+S.wave+' di dungeon '+DG.name+'. Coba strategi lain!')+
-    '</p>'+(win?'<div class="gemrew">◆ +'+gemGot+' PERMATA'+(first?' <small>(tamat pertama kali!)</small>':' <small>(ulang: hadiah lebih kecil)</small>')+'</div>':'')+
+    '</p><div class="gemrew" style="color:#ffd23b">🏆 SKOR: '+fin.toLocaleString('id-ID')+(hsr?' · PERINGKAT #'+hsr:'')+'</div>'+(win?'<div class="gemrew">◆ +'+gemGot+' PERMATA'+(first?' <small>(tamat pertama kali!)</small>':' <small>(ulang: hadiah lebih kecil)</small>')+'</div>':'')+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn go" id="again">↻ ULANGI</button>'+(win?'<button class="btn" id="toShop" style="border-color:#6ae8ff;color:#6ae8ff">◆ POWERUP</button>':'')+'<button class="btn" id="toMenu">☰ PILIH DUNGEON</button></div>';
   $('again').onclick=()=>startDungeon(DGI,ENDLESS);$('toMenu').onclick=showSelect;if(win)$('toShop').onclick=showShop;
   beep(win?880:90,.8,win?'triangle':'sawtooth',.06,win?400:-50);
@@ -3698,12 +3742,12 @@ function askMode(i){
 function showSelect(){
   const o=$('overlay');o.style.display='flex';const best=loadBest(),runs=loadRuns();
   const gm=loadGem();
-  let h='<h1>UNIVERSE DEFENDER</h1><div class="gembar"><span>◆ '+gm.gems+' PERMATA</span><button class="btn" id="shopB" style="border-color:#6ae8ff;color:#6ae8ff">POWERUP</button><button class="btn" id="colB" style="border-color:#ffd23b;color:#ffd23b">🃏 KOLEKSI KARTU</button></div><p class="intro">Pilih dungeon. Makin ke kanan makin sulit, boss muncul tiap 5 gelombang. Waspada: musuh perusak bisa menghancurkan menaramu. Perbaiki menara yang rusak!</p><div id="cards">';
+  let h='<h1>UNIVERSE DEFENDER</h1><div class="gembar"><span>◆ '+gm.gems+' PERMATA</span><button class="btn" id="shopB" style="border-color:#6ae8ff;color:#6ae8ff">POWERUP</button><button class="btn" id="colB" style="border-color:#ffd23b;color:#ffd23b">🃏 KOLEKSI KARTU</button><button class="btn" id="hsB" style="border-color:#52d86e;color:#52d86e">🏆 HIGHSCORE</button></div><p class="intro">Pilih dungeon. Makin ke kanan makin sulit, boss muncul tiap 5 gelombang. Waspada: musuh perusak bisa menghancurkan menaramu. Perbaiki menara yang rusak!</p><div id="cards">';
   DUNGEONS.forEach((d,i)=>{const b=best[d.id]||0;let pips='';for(let k=1;k<=6;k++)pips+='<i'+(k<=d.lvl?' class="on"':'')+'></i>';
     h+='<button class="card" data-i="'+i+'" style="--c:'+d.accent+'"><b>'+d.name+'</b><span class="pips">'+pips+'</span><small>'+d.sub+'</small><small class="bl">BOS: '+d.bosses.map(x=>x.name).join(' · ')+'</small><em>'+(b>=25?'✔ TAMAT':b?'Terbaik: gel '+b+'/25':'Belum dicoba')+'</em>'+(best[d.id+'_e']?'<em style="color:#ff9a3a">∞ Endless: gel '+best[d.id+'_e']+'</em>':'')+(runs[i]||runs['e'+i]?'<u class="sv">▶ ADA PROGRES TERSIMPAN</u>':'')+'</button>';});
   o.innerHTML=h+'</div><div class="gembar" style="gap:6px"><button class="btn" id="expB">SALIN KODE SIMPAN</button><button class="btn" id="impB">MUAT KODE</button></div>';
   o.querySelectorAll('.card').forEach(el=>el.onclick=()=>askMode(+el.dataset.i));
-  $('shopB').onclick=showShop;$('colB').onclick=()=>window.openGallery();
+  $('shopB').onclick=showShop;$('colB').onclick=()=>window.openGallery();$('hsB').onclick=()=>showHS();
   $('expB').onclick=()=>{const c=exportCode();(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(c):Promise.reject()).then(()=>toast('KODE SIMPAN TERSALIN',2000),()=>{prompt('Salin kode simpan ini:',c);});};
   $('impB').onclick=()=>{const c=prompt('Tempel kode simpan:');if(!c)return;try{importCode(c);toast('PROGRES DIMUAT',2000);showSelect();}catch(e){toast('KODE TIDAK VALID',2000);}};
 }
@@ -3774,7 +3818,7 @@ document.addEventListener('click',e=>{
 loadDungeon(0);reset();showSelect();
 (function(){const hm=document.getElementById('home');if(!hm)return;let done=false;const hint=hm.querySelector('.hblink');
 function wake(){try{if(!sound.ac||sound.ac.state==='closed')sound.ac=new (window.AudioContext||window.webkitAudioContext)();if(sound.ac.state!=='running')sound.ac.resume();}catch(e){}}
-function go(){if(done)return;done=true;wake();SFX.play('go');hm.style.display='none';}
+function go(){if(done)return;const fin=()=>{if(done)return;done=true;wake();SFX.play('go');hm.style.display='none';};if(!getNick()){nickModal(fin);return;}fin();}
 function press(){wake();if(!MUS.isOn()||MUS.themeOn()){go();return;}
   let p;try{p=MUS.playTheme();}catch(e){}
   if(p&&p.then)p.then(()=>{if(hint)hint.textContent='KETUK LAGI UNTUK MASUK';},()=>go());else go();}
