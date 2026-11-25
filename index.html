@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0a0814"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="apple-touch-icon" href="icon-192.png"><title>Universe Defender — Tower Defense Pixel Sci-Fi</title>
+<link rel="preload" as="image" href="hero.jpg" fetchpriority="high"><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0a0814"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="apple-touch-icon" href="icon-192.png"><title>Universe Defender — Tower Defense Pixel Sci-Fi</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -3859,6 +3859,6 @@ function loop(now){
 requestAnimationFrame(loop);
 })();
 </script>
-<script>if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<script>if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).then(r=>setTimeout(()=>{try{r.active.postMessage('warm');}catch(e){}},8000)).catch(()=>{}));</script>
 </body>
 </html>
