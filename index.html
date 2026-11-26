@@ -3753,12 +3753,7 @@ function renderInfo(){
     const uc=t.level<3?upCost(t):0;
     const row=(a,b)=>'<div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid #3d347066;padding-top:3px"><span style="color:#9a92c8">'+a+'</span><b style="color:#fff;white-space:nowrap">'+b+'</b></div>';
     el.innerHTML='<div style="display:flex;gap:8px;align-items:center"><img src="'+d.icons[t.level-1]+'" style="width:44px;height:44px;flex:none;image-rendering:pixelated"><div style="min-width:0;line-height:1.5"><b>'+d.lv[t.level-1].toUpperCase()+'</b><br><span style="color:#ffd23b">LV'+t.level+'</span></div></div>'+
-      '<div style="display:flex;flex-direction:column;gap:3px">'+row('Damage',Math.round(st.dmg))+row('Jarak',(st.range/T).toFixed(1))+row('Tembak',(1/st.rate).toFixed(1)+'/dtk')+row('HP','<span id="hpv">'+Math.ceil(t.hp)+'/'+t.max+'</span>')+'</div>'+
-      '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
-      (t.level<3?'<button class="btn go" id="upB"'+(S.gold<uc?' disabled':'')+'>UPGRADE ➜ '+d.lv[t.level].toUpperCase()+' ('+uc+')</button>':'<button class="btn" disabled>LEVEL MAX</button>')+
-      (t.hp<t.max?'<button class="btn go" id="repB">PERBAIKI ('+repCost(t)+')</button>':'')+'<button class="btn" id="sellB">JUAL +'+Math.round(t.spent*.6)+'</button></div>';
-    const u=$('upB');if(u)u.onclick=()=>upgrade(t);
-    $('sellB').onclick=()=>sell(t);const rp=$('repB');if(rp)rp.onclick=()=>repair(t);
+      '<div style="display:flex;flex-direction:column;gap:3px">'+row('Damage',Math.round(st.dmg))+row('Jarak',(st.range/T).toFixed(1))+row('Tembak',(1/st.rate).toFixed(1)+'/dtk')+row('HP','<span id="hpv">'+Math.ceil(t.hp)+'/'+t.max+'</span>')+'</div>';
   }else if(S.build){
     const d=TOWER_DEF[S.build];
     el.innerHTML='<div>'+d.name.toUpperCase()+' — '+d.desc+'<br>Klik petak kosong untuk membangun ('+d.cost+' kredit). Klik kanan / ESC batal.</div>';
@@ -3927,20 +3922,20 @@ let TP=null;
 function towerPopTick(){
   const t=S.sel;
   if(!TP){TP=document.createElement('div');TP.id='towerPop';
-    TP.style.cssText='position:fixed;z-index:9000;display:none;gap:4px;pointer-events:auto;background:#120c28f0;border:2px solid #7a5cff;padding:5px;box-shadow:0 0 14px #7a5cff99;font:11px monospace;white-space:nowrap';
+    TP.style.cssText='position:fixed;z-index:9000;display:none;gap:4px;pointer-events:auto;gap:6px;background:none;border:0;padding:0;font:18px monospace;white-space:nowrap';
     TP.innerHTML='<button class="btn go" id="tpUp"></button><button class="btn go" id="tpRep"></button><button class="btn" id="tpSell"></button>';
     document.body.appendChild(TP);
     ['pointerdown','click','contextmenu'].forEach(ev=>TP.addEventListener(ev,e=>e.stopPropagation()));
-    TP.querySelectorAll('button').forEach(b=>b.style.cssText+=';font-size:11px;padding:6px 9px;min-height:0');
+    TP.querySelectorAll('button').forEach(b=>{b.style.cssText+=';width:38px;height:38px;padding:0;min-height:0;border-radius:50%;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px #000a;border:2px solid #fff6';});
     $('tpUp').onclick=()=>{if(S.sel)upgrade(S.sel);};
     $('tpRep').onclick=()=>{if(S.sel)repair(S.sel);};
     $('tpSell').onclick=()=>{if(S.sel)sell(S.sel);};}
   if(!t||S.over||S.dialog||t.dead||S.towers.indexOf(t)<0||$('overlay').style.display==='flex'||($('home')&&$('home').style.display!=='none')){TP.style.display='none';return;}
   const r=cv.getBoundingClientRect(),q=ISO(t.x,t.y),k=r.width/W,sx=r.left+q[0]*k,sy=r.top+q[1]*k,uc=t.level<3?upCost(t):0,rc=repCost(t);
   const up=$('tpUp'),rp=$('tpRep'),sl=$('tpSell');
-  up.textContent=t.level<3?'⬆ UPGRADE '+uc:'LEVEL MAX';up.disabled=t.level>=3||S.gold<uc;
-  rp.textContent=t.hp<t.max?'⚒ PERBAIKI '+rc:'⚒ HP PENUH';rp.disabled=t.hp>=t.max||S.gold<rc;
-  sl.textContent='✖ JUAL +'+Math.round(t.spent*.6);
+  up.textContent='⬆';up.title=t.level<3?'Upgrade '+uc:'Level max';up.disabled=t.level>=3||S.gold<uc;
+  rp.textContent='🔧';rp.title=t.hp<t.max?'Perbaiki '+rc:'HP penuh';rp.disabled=t.hp>=t.max||S.gold<rc;
+  sl.textContent='✖';sl.title='Jual +'+Math.round(t.spent*.6);
   TP.style.display='flex';
   const w=TP.offsetWidth,h=TP.offsetHeight;
   let x=Math.min(innerWidth-w-4,Math.max(4,sx-w/2)),y=sy-62*k-h;
