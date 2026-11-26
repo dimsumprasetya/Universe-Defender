@@ -3924,13 +3924,37 @@ hm.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('#ho
 window.addEventListener('keydown',e=>{if(!done&&(e.key==='Enter'||e.key===' ')){e.preventDefault();press();}});
 setInterval(()=>{if(!done&&MUS.themeOn()&&hint)hint.textContent='KETUK ATAU TEKAN ENTER';},400);})();
 if(/[?&]test=bh/.test(location.search)){const _iv=setInterval(()=>{const h=document.getElementById('home');if(h&&h.style.display==='none'){clearInterval(_iv);setTimeout(()=>{try{startDungeon(5,false);}catch(er){}setTimeout(()=>{try{if(S.dialog)endIntro();S.enemies.length=0;spawn('boss5');}catch(er){}},3500);},800);}},300);}
+let TP=null;
+function towerPopTick(){
+  const t=S.sel;
+  if(!TP){TP=document.createElement('div');TP.id='towerPop';
+    TP.style.cssText='position:fixed;z-index:9000;display:none;gap:4px;pointer-events:auto;background:#120c28f0;border:2px solid #7a5cff;padding:5px;box-shadow:0 0 14px #7a5cff99;font:11px monospace;white-space:nowrap';
+    TP.innerHTML='<button class="btn go" id="tpUp"></button><button class="btn go" id="tpRep"></button><button class="btn" id="tpSell"></button>';
+    document.body.appendChild(TP);
+    ['pointerdown','click','contextmenu'].forEach(ev=>TP.addEventListener(ev,e=>e.stopPropagation()));
+    TP.querySelectorAll('button').forEach(b=>b.style.cssText+=';font-size:11px;padding:6px 9px;min-height:0');
+    $('tpUp').onclick=()=>{if(S.sel)upgrade(S.sel);};
+    $('tpRep').onclick=()=>{if(S.sel)repair(S.sel);};
+    $('tpSell').onclick=()=>{if(S.sel)sell(S.sel);};}
+  if(!t||S.over||S.dialog||t.dead||S.towers.indexOf(t)<0||$('overlay').style.display==='flex'||($('home')&&$('home').style.display!=='none')){TP.style.display='none';return;}
+  const r=cv.getBoundingClientRect(),q=ISO(t.x,t.y),k=r.width/W,sx=r.left+q[0]*k,sy=r.top+q[1]*k,uc=t.level<3?upCost(t):0,rc=repCost(t);
+  const up=$('tpUp'),rp=$('tpRep'),sl=$('tpSell');
+  up.textContent=t.level<3?'⬆ UPGRADE '+uc:'LEVEL MAX';up.disabled=t.level>=3||S.gold<uc;
+  rp.textContent=t.hp<t.max?'⚒ PERBAIKI '+rc:'⚒ HP PENUH';rp.disabled=t.hp>=t.max||S.gold<rc;
+  sl.textContent='✖ JUAL +'+Math.round(t.spent*.6);
+  TP.style.display='flex';
+  const w=TP.offsetWidth,h=TP.offsetHeight;
+  let x=Math.min(innerWidth-w-4,Math.max(4,sx-w/2)),y=sy-62*k-h;
+  if(y<4)y=Math.min(innerHeight-h-4,sy+24*k);
+  TP.style.left=Math.round(x)+'px';TP.style.top=Math.round(y)+'px';
+}
 let last=performance.now();
 function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
   if(S.dialog){dlgTick(dt);}
   else if(!S.paused&&!S.over&&$('overlay').style.display!=='flex'){for(let i=0;i<S.speed;i++)update(dt);}
   if(S.sel&&!S.paused){const u=$('upB');if(u)u.disabled=S.gold<upCost(S.sel);const hv=$('hpv');if(hv)hv.textContent=Math.ceil(S.sel.hp)+'/'+S.sel.max;const rb=$('repB');if(rb){rb.textContent='PERBAIKI ('+repCost(S.sel)+')';rb.disabled=S.gold<repCost(S.sel);}}
-  draw();
+  draw();towerPopTick();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
