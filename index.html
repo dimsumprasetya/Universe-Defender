@@ -2610,7 +2610,7 @@ function regFrames(di,k){
   try{const r=HD.creepFrames(di,k);r.frames.pad=r.pad;return HUE_FR[key]=r.frames;}catch(err){console.error(err);return HUE_FR[key]=BASE_FR[k].map(c=>hueShift(c,DUNGEONS[di].hue));}
 }
 function autoPort(fr,sz){const c=newCanvas(32,32),g=c.getContext('2d');g.imageSmoothingEnabled=false;const q=Math.round(sz*.62);g.drawImage(fr,Math.round((sz-q)/2),0,q,q,0,0,32,32);return c;}
-const CUSTOMDG=[0,1,2];const CBPD={0:[[3,.02,.4,1,0],[4,.025,.5,1,.9],[2,.015,.3,1,.7],[3,.02,.35,0,0],[5,.03,.6,1,1.6]],1:[[2,.03,.3,0,0],[3,.02,.4,1,1],[3,.02,.3,1,.4],[3,.02,.4,1,.9],[3,.02,.4,1,1.4]],2:[[2,.03,.3,0,0],[3,.02,.4,1,.8],[3,.02,.3,1,.6],[2,.03,.4,1,.6],[1,.04,.5,0,1.4]]};
+const CUSTOMDG=[0,1,2,3];const CBPD={0:[[3,.02,.4,1,0],[4,.025,.5,1,.9],[2,.015,.3,1,.7],[3,.02,.35,0,0],[5,.03,.6,1,1.6]],1:[[2,.03,.3,0,0],[3,.02,.4,1,1],[3,.02,.3,1,.4],[3,.02,.4,1,.9],[3,.02,.4,1,1.4]],2:[[2,.03,.3,0,0],[3,.02,.4,1,.8],[3,.02,.3,1,.6],[2,.03,.4,1,.6],[1,.04,.5,0,1.4]],3:[[3,.02,.4,1,.6],[3,.02,.4,1,.9],[2,.015,.3,1,1],[3,.03,.4,0,.6],[2,.02,.4,1,1.4]]};
 function loadCustomBoss(out,di){for(let t=0;t<5;t++){const fr=[];let n=0;for(let f=0;f<4;f++){const im=new Image();im.onload=()=>{const c=newCanvas(im.width,im.height);c.getContext('2d').drawImage(im,0,0);fr[f]=c;if(++n===4){const c0=fr[0],q=Math.min(c0.width,Math.round(c0.height*.42)),p=newCanvas(32,32),g=p.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(c0,Math.round((c0.width-q)/2),Math.round(c0.height*.02),q,q,0,0,32,32);out[t].custom={frames:fr,port:[p,p]};}};im.src='bs/d'+di+'_b'+(t+1)+'_'+f+'.png';}}}
 function bossAssets(di){
   if(BOSS_CACHE[di])return BOSS_CACHE[di];const out=[];
