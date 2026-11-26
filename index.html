@@ -3923,7 +3923,6 @@ hm.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('#ho
 ['click','touchend','pointerup'].forEach(ev=>hm.addEventListener(ev,wake,{passive:true}));
 window.addEventListener('keydown',e=>{if(!done&&(e.key==='Enter'||e.key===' ')){e.preventDefault();press();}});
 setInterval(()=>{if(!done&&MUS.themeOn()&&hint)hint.textContent='KETUK ATAU TEKAN ENTER';},400);})();
-if(/[?&]test=bh/.test(location.search)){const _iv=setInterval(()=>{const h=document.getElementById('home');if(h&&h.style.display==='none'){clearInterval(_iv);setTimeout(()=>{try{startDungeon(5,false);}catch(er){}setTimeout(()=>{try{if(S.dialog)endIntro();S.enemies.length=0;spawn('boss5');}catch(er){}},3500);},800);}},300);}
 let TP=null;
 function towerPopTick(){
   const t=S.sel;
