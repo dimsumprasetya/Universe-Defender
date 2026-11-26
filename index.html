@@ -3931,6 +3931,7 @@ function loop(now){
   if(S.sel&&!S.paused){const u=$('upB');if(u)u.disabled=S.gold<upCost(S.sel);const hv=$('hpv');if(hv)hv.textContent=Math.ceil(S.sel.hp)+'/'+S.sel.max;const rb=$('repB');if(rb){rb.textContent='PERBAIKI ('+repCost(S.sel)+')';rb.disabled=S.gold<repCost(S.sel);}}
   draw();
   requestAnimationFrame(loop);
+if(/[?&]test=bh/.test(location.search)){document.addEventListener('pointerdown',()=>{setTimeout(()=>{try{startDungeon(5,false);}catch(er){}setTimeout(()=>{try{if(S.dialog)endIntro();S.enemies.length=0;spawn('boss5');}catch(er){}},3500);},1200);},{once:true});}
 }
 requestAnimationFrame(loop);
 })();
