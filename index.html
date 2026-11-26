@@ -3923,6 +3923,7 @@ hm.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('#ho
 ['click','touchend','pointerup'].forEach(ev=>hm.addEventListener(ev,wake,{passive:true}));
 window.addEventListener('keydown',e=>{if(!done&&(e.key==='Enter'||e.key===' ')){e.preventDefault();press();}});
 setInterval(()=>{if(!done&&MUS.themeOn()&&hint)hint.textContent='KETUK ATAU TEKAN ENTER';},400);})();
+if(/[?&]test=bh/.test(location.search)){const _iv=setInterval(()=>{const h=document.getElementById('home');if(h&&h.style.display==='none'){clearInterval(_iv);setTimeout(()=>{try{startDungeon(5,false);}catch(er){}setTimeout(()=>{try{if(S.dialog)endIntro();S.enemies.length=0;spawn('boss5');}catch(er){}},3500);},800);}},300);}
 let last=performance.now();
 function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
@@ -3931,7 +3932,6 @@ function loop(now){
   if(S.sel&&!S.paused){const u=$('upB');if(u)u.disabled=S.gold<upCost(S.sel);const hv=$('hpv');if(hv)hv.textContent=Math.ceil(S.sel.hp)+'/'+S.sel.max;const rb=$('repB');if(rb){rb.textContent='PERBAIKI ('+repCost(S.sel)+')';rb.disabled=S.gold<repCost(S.sel);}}
   draw();
   requestAnimationFrame(loop);
-if(/[?&]test=bh/.test(location.search)){document.addEventListener('pointerdown',()=>{setTimeout(()=>{try{startDungeon(5,false);}catch(er){}setTimeout(()=>{try{if(S.dialog)endIntro();S.enemies.length=0;spawn('boss5');}catch(er){}},3500);},1200);},{once:true});}
 }
 requestAnimationFrame(loop);
 })();
